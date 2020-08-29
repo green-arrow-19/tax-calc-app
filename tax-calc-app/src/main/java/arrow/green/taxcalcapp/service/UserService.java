@@ -3,14 +3,18 @@ package arrow.green.taxcalcapp.service;
 import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import arrow.green.taxcalcapp.exception.UserAlreadyExistException;
+import arrow.green.taxcalcapp.exception.UserNotFoundException;
 import arrow.green.taxcalcapp.exception.WeakPasswordException;
 import arrow.green.taxcalcapp.model.PersonalDetails;
 import arrow.green.taxcalcapp.model.SignUpRequest;
 import arrow.green.taxcalcapp.model.SignUpResponse;
 import arrow.green.taxcalcapp.model.User;
+import arrow.green.taxcalcapp.model.dto.UserDto;
 import arrow.green.taxcalcapp.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,6 +33,9 @@ public class UserService {
     @Autowired
     PasswordService passwordService;
     
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    
     public SignUpResponse signup(SignUpRequest signUpRequest, HttpServletResponse httpServletResponse) {
         Optional<User> user = userRepository.findByUsername(signUpRequest.getUsername());
         if (user.isPresent()) {
@@ -45,9 +52,11 @@ public class UserService {
         User userEntity = generateUser(signUpRequest);
         User savedUserEntity = userRepository.save(userEntity);
         return SignUpResponse.builder()
-                             .username(savedUserEntity.getUsername())
+                             .userDto(UserDto.builder()
+                                             .username(savedUserEntity.getUsername())
+                                             .personalDetails(savedUserEntity.getPersonalDetails())
+                                             .build())
                              .status("SUCCESS")
-                             .personalDetails(savedUserEntity.getPersonalDetails())
                              .build();
     }
     
@@ -62,6 +71,15 @@ public class UserService {
                                                      .prefix(signUpRequest.getPrefix())
                                                      .build());
         return userEntity;
+    }
+    
+    public UserDto getUser(String username) {
+        Optional<User> user = userRepository.findByUsername(username);
+        if(user.isEmpty()) {
+            log.error("Getting user details, user : {} doesn't exist", username);
+            throw new UserNotFoundException("User : " + username + ", doesn't exists");
+        }
+        return objectMapper.convertValue(user.get(), UserDto.class);
     }
 }
 
