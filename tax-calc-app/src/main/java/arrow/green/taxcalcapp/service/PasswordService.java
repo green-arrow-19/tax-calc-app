@@ -25,7 +25,7 @@ public class PasswordService {
                 || passwordUnderCheck.length() > 12) {
             throw new WeakPasswordException("Password can't have lesser than 8 characters or more than 12 characters");
         }
-    
+        
         if (!VALID_STRONG_PASSWORD_REGEX.matcher(passwordUnderCheck).matches()) {
             throw new WeakPasswordException(
                     "Password should have 1 upper case 1 special character and should be alphanumeric");

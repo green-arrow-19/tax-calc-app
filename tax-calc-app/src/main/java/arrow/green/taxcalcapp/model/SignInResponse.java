@@ -13,10 +13,12 @@ import lombok.Getter;
 public class SignInResponse extends CommonResponse {
     
     private final UserDto userDto;
+    private final String jwtToken;
     
     @Builder
-    public SignInResponse(String status, UserDto userDto) {
+    public SignInResponse(String status, UserDto userDto, String jwtToken) {
         super(status);
         this.userDto = userDto;
+        this.jwtToken = jwtToken;
     }
 }
