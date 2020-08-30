@@ -3,13 +3,13 @@ package arrow.green.taxcalcapp.exception.handler;
 import java.util.Date;
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import arrow.green.taxcalcapp.exception.NotAuthorizedException;
 import arrow.green.taxcalcapp.exception.UserAlreadyExistException;
 import arrow.green.taxcalcapp.exception.UserNotFoundException;
 import arrow.green.taxcalcapp.exception.WeakPasswordException;
@@ -45,6 +45,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorDetails> argumentNotValidException(Throwable throwable, HttpServletRequest request) {
         return getCurrentFailureMessage(HttpStatus.BAD_REQUEST, throwable.getMessage());
+    }
+    
+    @ExceptionHandler(NotAuthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<ErrorDetails> notAuthorizedException(Throwable throwable, HttpServletRequest request) {
+        return getCurrentFailureMessage(HttpStatus.UNAUTHORIZED, throwable.getMessage());
     }
     
     @ExceptionHandler(RuntimeException.class)
