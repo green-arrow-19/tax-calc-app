@@ -1,5 +1,6 @@
 package arrow.green.taxcalcapp.model;
 
+import arrow.green.taxcalcapp.model.dto.UserDto;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -11,13 +12,11 @@ import lombok.Getter;
 @Getter
 public class SignUpResponse extends CommonResponse{
     
-    private final String username;
-    private final PersonalDetails personalDetails;
+    private final UserDto userDto;
     
     @Builder
-    public SignUpResponse(String status, String username, PersonalDetails personalDetails) {
+    public SignUpResponse(String status, UserDto userDto) {
         super(status);
-        this.username = username;
-        this.personalDetails = personalDetails;
+        this.userDto = userDto;
     }
 }
