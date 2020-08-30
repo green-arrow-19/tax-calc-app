@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import arrow.green.taxcalcapp.exception.NotAuthorizedException;
 import arrow.green.taxcalcapp.exception.UserAlreadyExistException;
 import arrow.green.taxcalcapp.exception.UserNotFoundException;
 import arrow.green.taxcalcapp.exception.WeakPasswordException;
@@ -40,6 +39,8 @@ public class UserService {
     PasswordService passwordService;
     @Autowired
     JwtUtil jwtUtil;
+    @Autowired
+    AuthenticationService authenticationService;
     
     public SignUpResponse signup(SignUpRequest signUpRequest, HttpServletResponse httpServletResponse) {
         Optional<User> user = userRepository.findByUsername(signUpRequest.getUsername());
@@ -77,13 +78,7 @@ public class UserService {
             log.error("Getting user details, user : {} doesn't exist", username);
             throw new UserNotFoundException("User : " + username + ", doesn't exists");
         }
-        if (!Role.ADMIN.equals(user.get().getRole())) {
-            String authUserName = jwtUtil.extractUsername(authToken.substring(7));
-            if (!username.equals(authUserName)) {
-                log.error("Not authorized to get details of other user");
-                throw new NotAuthorizedException("Not authorized to get details of other user");
-            }
-        }
+        authenticationService.authenticateUser(authToken, user.get());
         return objectMapper.convertValue(user.get(), UserDto.class);
     }
     
