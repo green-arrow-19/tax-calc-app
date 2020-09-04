@@ -19,7 +19,6 @@ import arrow.green.taxcalcapp.model.SignUpRequest;
 import arrow.green.taxcalcapp.model.SignUpResponse;
 import arrow.green.taxcalcapp.model.dto.UserDto;
 import arrow.green.taxcalcapp.service.UserService;
-import arrow.green.taxcalcapp.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
