@@ -36,8 +36,13 @@ public class TaxService {
         if(applyDefaultTax.equals(true) || item.equals(TaxItem.NO_TAX)) {
             taxPercentage = item.defaultTaxPercentage;
         }
-        
-        Double taxAmount = Objects.isNull(taxPercentage) ? 0.0 : calculateTaxAmount(taxPercentage, price);
+        Double taxAmount = null;
+        if(Objects.isNull(taxPercentage)) {
+            taxPercentage = 0.0;
+            taxAmount = 0.0;
+        } else {
+            taxAmount = calculateTaxAmount(taxPercentage, price);
+        }
         
         TaxEntry taxEntry = new TaxEntry();
         taxEntry.setUser(user);
