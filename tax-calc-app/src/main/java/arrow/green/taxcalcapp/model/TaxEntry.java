@@ -1,6 +1,7 @@
 package arrow.green.taxcalcapp.model;
 
 import java.util.Date;
+import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -56,9 +57,13 @@ public class TaxEntry {
     
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonBackReference("user")
+    @JsonBackReference
     private User user;
     
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, item, createdAt, totalPrice, taxPercentage, taxAmount, description);
+    }
 }
 
 

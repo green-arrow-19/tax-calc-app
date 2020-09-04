@@ -2,6 +2,7 @@ package arrow.green.taxcalcapp.model;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -54,8 +55,8 @@ public class User implements UserDetails {
     @Column(name = "role", nullable = false)
     private Role role;
     
-    @OneToMany(mappedBy = "user_id", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference("user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JsonManagedReference
     private Set<TaxEntry> taxEntries;
     
     @Embedded
@@ -84,5 +85,10 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, username, password, createdAt, role, personalDetails);
     }
 }
