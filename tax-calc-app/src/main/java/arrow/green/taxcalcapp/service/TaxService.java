@@ -1,0 +1,64 @@
+package arrow.green.taxcalcapp.service;
+
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import arrow.green.taxcalcapp.model.CommonResponse;
+import arrow.green.taxcalcapp.model.TaxEntry;
+import arrow.green.taxcalcapp.model.TaxItem;
+import arrow.green.taxcalcapp.model.User;
+import arrow.green.taxcalcapp.repository.TaxRepository;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * @author nakulgoyal
+ *         04/09/20
+ **/
+
+@Slf4j
+@Service
+public class TaxService {
+    
+    @Autowired
+    private AuthenticationService authenticationService;
+    
+    @Autowired
+    private TaxRepository taxRepository;
+    
+    public CommonResponse addItem(TaxItem item, Double price, Double taxPercentage, String desc, String auth) {
+        User user = authenticationService.extractUser(auth);
+        log.info("Adding item for user : {}, item : {}, price : {}, taxPercentage : {}, desc : {}",
+                 user.getUsername(), item, price, taxPercentage, desc);
+    
+        if(Objects.isNull(taxPercentage) || item.equals(TaxItem.NO_TAX)) {
+            taxPercentage = item.defaultTaxPercentage;
+        }
+        
+        Double taxAmount = calculateTaxAmount(taxPercentage, price);
+        
+        TaxEntry taxEntry = new TaxEntry();
+        taxEntry.setUser(user);
+        taxEntry.setItem(item);
+        taxEntry.setTotalPrice(price);
+        taxEntry.setTaxPercentage(taxPercentage);
+        taxEntry.setDescription(desc);
+        taxEntry.setTaxAmount(taxAmount);
+        
+        taxRepository.save(taxEntry);
+        return new CommonResponse("SUCCESS");
+    }
+    
+    private Double calculateTaxAmount(Double taxPercentage, Double price) {
+        return taxPercentage*price/100;
+    }
+    
+    public List<TaxEntry> getItems(String auth) {
+        User user = authenticationService.extractUser(auth);
+        log.info("Get all items request for user : {}", user.getUsername());
+        return taxRepository.findByUserId(user.getId());
+    }
+}
+
+
