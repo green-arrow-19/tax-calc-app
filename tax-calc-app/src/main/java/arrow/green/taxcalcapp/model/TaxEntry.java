@@ -1,5 +1,6 @@
 package arrow.green.taxcalcapp.model;
 
+import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -10,8 +11,11 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import org.hibernate.annotations.CreationTimestamp;
 import lombok.Data;
 
 /**
@@ -32,6 +36,11 @@ public class TaxEntry {
     @Enumerated(EnumType.STRING)
     @Column(name = "item", nullable = false)
     private TaxItem item;
+    
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "created_at")
+    private Date createdAt;
     
     @Column(name = "totalPrice", nullable = false)
     private Double totalPrice;
