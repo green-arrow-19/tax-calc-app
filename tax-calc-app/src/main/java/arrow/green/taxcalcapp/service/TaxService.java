@@ -27,16 +27,17 @@ public class TaxService {
     @Autowired
     private TaxRepository taxRepository;
     
-    public CommonResponse addItem(TaxItem item, Double price, Double taxPercentage, String desc, String auth) {
+    public CommonResponse addItem(TaxItem item, Double price, Double taxPercentage, String desc,
+            Boolean applyDefaultTax, String auth) {
         User user = authenticationService.extractUser(auth);
         log.info("Adding item for user : {}, item : {}, price : {}, taxPercentage : {}, desc : {}",
                  user.getUsername(), item, price, taxPercentage, desc);
     
-        if(Objects.isNull(taxPercentage) || item.equals(TaxItem.NO_TAX)) {
+        if(applyDefaultTax.equals(true) || item.equals(TaxItem.NO_TAX)) {
             taxPercentage = item.defaultTaxPercentage;
         }
         
-        Double taxAmount = calculateTaxAmount(taxPercentage, price);
+        Double taxAmount = Objects.isNull(taxPercentage) ? 0.0 : calculateTaxAmount(taxPercentage, price);
         
         TaxEntry taxEntry = new TaxEntry();
         taxEntry.setUser(user);

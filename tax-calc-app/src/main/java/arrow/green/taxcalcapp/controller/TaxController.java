@@ -41,7 +41,8 @@ public class TaxController {
             @RequestParam(name = "item", defaultValue = "NO_TAX") TaxItem item,
             @RequestParam(name = "price") Double price,
             @RequestParam(name = "taxPercentage", required = false) Double taxPercentage,
-            @RequestParam(name = "description", required = false) String desc) {
+            @RequestParam(name = "description", required = false) String desc,
+            @RequestParam(name = "applyDefaultTax", defaultValue = "false") Boolean applyDefaultTax) {
         log.info("Add new item request");
         if (Objects.isNull(price) || price <= 0) {
             log.error("price cannot be null, empty or negative");
@@ -51,7 +52,7 @@ public class TaxController {
             log.error("taxPercentage should lie b/w 0 to 100");
             throw new BadCredentialsException("taxPercentage should lie b/w 0 to 100");
         }
-        CommonResponse commonResponse = taxService.addItem(item, price, taxPercentage, desc, auth);
+        CommonResponse commonResponse = taxService.addItem(item, price, taxPercentage, desc, applyDefaultTax, auth);
         log.info("New item added successfully");
         return ResponseEntity.accepted().body(commonResponse);
     }
