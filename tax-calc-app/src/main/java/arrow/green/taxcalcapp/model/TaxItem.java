@@ -5,20 +5,18 @@ package arrow.green.taxcalcapp.model;
  *         04/09/20
  **/
 public enum TaxItem {
-    FOOD, ELECTRONICS, CLOTHES, AUTO_MOBILE, NO_TAX, OTHERS
-
-}
-
-/**
- * @author nakulgoyal
- *         04/09/20
- **/
-class TaxAmountConstants {
-    public final static Double FOOD = 5.0;
-    public final static Double ELECTRONICS = 5.0;
-    public final static Double CLOTHES = 5.0;
-    public final static Double AUTO_MOBILE = 5.0;
-    public final static Double NO_TAX = 0.0;
-    public final static Double OTHERS = 1.0;
+    FOOD(5.0),
+    ELECTRONICS(5.0),
+    CLOTHES(5.0),
+    AUTO_MOBILE(5.0),
+    NO_TAX(0.0),
+    OTHERS(1.0);
     
+    public final Double defaultTaxPercentage;
+    TaxItem(Double defaultTaxPercentage) {
+        this.defaultTaxPercentage = defaultTaxPercentage;
+    }
 }
+
+
+
