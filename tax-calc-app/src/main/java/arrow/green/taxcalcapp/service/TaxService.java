@@ -1,5 +1,6 @@
 package arrow.green.taxcalcapp.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
@@ -64,6 +65,18 @@ public class TaxService {
         User user = authenticationService.extractUser(auth);
         log.info("Get all items request for user : {}", user.getUsername());
         return taxRepository.findByUserId(user.getId());
+    }
+    
+    public List<TaxEntry> getItemByDate(String auth, LocalDate onDate) {
+        User user = authenticationService.extractUser(auth);
+        log.info("Get all items for user : {} added on date : {}", user, onDate);
+        return taxRepository.findByUserIdAndDate(user.getId(), onDate);
+    }
+    
+    public List<TaxEntry> getItem_betweenDates(String auth, LocalDate startDate, LocalDate endDate) {
+        User user = authenticationService.extractUser(auth);
+        log.info("Get all items for user : {} between date {} and {}", user, startDate, endDate);
+        return taxRepository.getData_between(startDate, endDate);
     }
 }
 
