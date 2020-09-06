@@ -78,7 +78,7 @@ public class UserService {
             log.error("Getting user details, user : {} doesn't exist", username);
             throw new UserNotFoundException("User : " + username + ", doesn't exists");
         }
-        authenticationService.authenticateUser(authToken, user.get());
+        authenticationService.authenticateUserForGetUser(authToken, user.get());
         return objectMapper.convertValue(user.get(), UserDto.class);
     }
     
