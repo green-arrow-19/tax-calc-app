@@ -91,4 +91,10 @@ public class User implements UserDetails {
     public int hashCode() {
         return Objects.hash(id, username, password, createdAt, role, personalDetails);
     }
+    
+    @Override
+    public String toString() {
+        return "User{" + "id=" + id + ", username='" + username + '\'' + ", password='" + password + '\''
+                + ", createdAt=" + createdAt + ", role=" + role + ", personalDetails=" + personalDetails + '}';
+    }
 }

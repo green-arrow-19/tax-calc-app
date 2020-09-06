@@ -1,6 +1,8 @@
 package arrow.green.taxcalcapp.controller;
 
 import java.time.LocalDate;
+import java.time.temporal.Temporal;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -61,25 +63,24 @@ public class TaxController {
         return ResponseEntity.accepted().body(commonResponse);
     }
     
-    @GetMapping("/item/{onDate}")
+    @GetMapping("/item/onDate")
     public ResponseEntity<List<TaxEntry>> getItemByDate(
             @RequestHeader(name = HeaderConstants.AUTHORIZATION) String auth,
-            @PathVariable(value = "from", required = true) @DateTimeFormat(iso= DateTimeFormat.ISO.DATE) LocalDate onDate) {
+            @RequestParam(value = "date")  String onDate) {
         log.info("Request for listing items on date : {}", onDate);
         List<TaxEntry> taxEntries = taxService.getItemByDate(auth, onDate);
         return ResponseEntity.ok(taxEntries);
     }
     
-    @GetMapping("/item/{from}/{to}")
+    @GetMapping("/item/fromTo")
     public ResponseEntity<List<TaxEntry>> getItemBetweenDate(
-            @RequestParam(name = HeaderConstants.AUTHORIZATION) String auth,
-            @PathVariable(value = "from", required = true) @DateTimeFormat(iso= DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @PathVariable(value = "to", required = true)  @DateTimeFormat(iso= DateTimeFormat.ISO.DATE) LocalDate toDate){
-        List<TaxEntry> taxEntries = taxService.getItem_betweenDates(auth, fromDate, toDate);
+            @RequestHeader(name = HeaderConstants.AUTHORIZATION) String auth,
+            @RequestParam(value = "from")String fromDate,
+            @RequestParam(value = "to")  String toDate){
+        List<TaxEntry> taxEntries = taxService.getItemBetweenDates(auth, fromDate, toDate);
         return ResponseEntity.ok(taxEntries);
     }
     
-
+    
+    
 }
-
-

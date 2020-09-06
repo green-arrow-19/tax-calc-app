@@ -1,8 +1,10 @@
 package arrow.green.taxcalcapp.service;
 
-import java.time.LocalDate;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,23 +24,23 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class TaxService {
     
+    private static final String DATE_FORMAT = "dd-MM-yyyy";
     @Autowired
     private AuthenticationService authenticationService;
-    
     @Autowired
     private TaxRepository taxRepository;
     
     public CommonResponse addItem(TaxItem item, Double price, Double taxPercentage, String desc,
             Boolean applyDefaultTax, String auth) {
         User user = authenticationService.extractUser(auth);
-        log.info("Adding item for user : {}, item : {}, price : {}, taxPercentage : {}, desc : {}",
-                 user.getUsername(), item, price, taxPercentage, desc);
-    
-        if(applyDefaultTax.equals(true) || item.equals(TaxItem.NO_TAX)) {
+        log.info("Adding item for user : {}, item : {}, price : {}, taxPercentage : {}, desc : {}", user.getUsername(),
+                 item, price, taxPercentage, desc);
+        
+        if (applyDefaultTax.equals(true) || item.equals(TaxItem.NO_TAX)) {
             taxPercentage = item.defaultTaxPercentage;
         }
         Double taxAmount = null;
-        if(Objects.isNull(taxPercentage)) {
+        if (Objects.isNull(taxPercentage)) {
             taxPercentage = 0.0;
             taxAmount = 0.0;
         } else {
@@ -58,7 +60,7 @@ public class TaxService {
     }
     
     private Double calculateTaxAmount(Double taxPercentage, Double price) {
-        return taxPercentage*price/100;
+        return taxPercentage * price / 100;
     }
     
     public List<TaxEntry> getItems(String auth) {
@@ -67,16 +69,31 @@ public class TaxService {
         return taxRepository.findByUserId(user.getId());
     }
     
-    public List<TaxEntry> getItemByDate(String auth, LocalDate onDate) {
+    public List<TaxEntry> getItemByDate(String auth, String onDate) {
         User user = authenticationService.extractUser(auth);
         log.info("Get all items for user : {} added on date : {}", user, onDate);
-        return taxRepository.findByUserIdAndDate(user.getId(), onDate);
+        List<TaxEntry> taxEntries = taxRepository.findByUserId(user.getId());
+        
+        return taxEntries.stream().filter(taxEntry -> onDate.equals(convertToStringDate(taxEntry.getCreatedAt())))
+                         .collect(Collectors.toList());
     }
     
-    public List<TaxEntry> getItem_betweenDates(String auth, LocalDate startDate, LocalDate endDate) {
+    public List<TaxEntry> getItemBetweenDates(String auth, String startDate, String endDate) {
+
         User user = authenticationService.extractUser(auth);
         log.info("Get all items for user : {} between date {} and {}", user, startDate, endDate);
-        return taxRepository.getData_between(startDate, endDate);
+        List<TaxEntry> taxEntries = taxRepository.findByUserId(user.getId());
+
+        return taxEntries.stream().filter(taxEntry -> {
+            String createdAt = convertToStringDate(taxEntry.getCreatedAt());
+            return startDate.compareTo(createdAt) <= 0 && endDate.compareTo(createdAt) >= 0;
+        }).collect(Collectors.toList());
+
+    }
+    
+    private String convertToStringDate(Date date) {
+        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
+        return formatter.format(date);
     }
 }
 
