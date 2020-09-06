@@ -64,6 +64,13 @@ public class TaxEntry {
     public int hashCode() {
         return Objects.hash(id, item, createdAt, totalPrice, taxPercentage, taxAmount, description);
     }
+    
+    @Override
+    public String toString() {
+        return "TaxEntry{" + "id=" + id + ", item=" + item + ", createdAt=" + createdAt + ", totalPrice=" + totalPrice
+                + ", taxPercentage=" + taxPercentage + ", taxAmount=" + taxAmount + ", description='" + description
+                + '\'' + ", userId=" + user.getId() + '}';
+    }
 }
 
 

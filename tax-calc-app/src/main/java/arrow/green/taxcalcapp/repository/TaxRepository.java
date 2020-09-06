@@ -1,9 +1,10 @@
 package arrow.green.taxcalcapp.repository;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.query.Param;
 import arrow.green.taxcalcapp.model.TaxEntry;
 
 /**
@@ -13,6 +14,7 @@ import arrow.green.taxcalcapp.model.TaxEntry;
 
 public interface TaxRepository extends JpaRepository<TaxEntry, Long> {
     List<TaxEntry> findByUserId(Long userId);
+    
 }
 
 
