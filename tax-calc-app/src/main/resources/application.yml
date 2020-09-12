@@ -7,3 +7,12 @@ server:
 
 jwt:
   secret.key: 'nnmmnnmm'
+
+email:
+  service:
+    enabled: false
+    host: localhost
+    scheme: http
+    port: 8040
+    endpoints:
+      send-mail: /email/send
