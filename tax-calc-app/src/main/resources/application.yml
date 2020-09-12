@@ -2,6 +2,9 @@ spring:
   profile: 'local'
   application:
     name: 'tax-calc-app'
+  data:
+    mongodb:
+      database: taxcalc
 server:
   port: 8080
 
@@ -10,7 +13,7 @@ jwt:
 
 email:
   service:
-    enabled: false
+    enabled: true
     host: localhost
     scheme: http
     port: 8040
