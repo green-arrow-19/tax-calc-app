@@ -57,6 +57,16 @@ public class UserController {
         return ResponseEntity.accepted().body(signUpResponse);
     }
     
+    @PostMapping("/signup/verified")
+    public ResponseEntity<SignUpResponse> signupVerified(
+            @RequestParam(value = "username", required = true) String username,
+            HttpServletResponse httpServletResponse) {
+        log.info("SignUp verified request for user : {}", username);
+        SignUpResponse signUpResponse = userService.signupVerified(username, httpServletResponse);
+        log.info("SignUp request SUCCESSFUL for user : {}", signUpResponse.getUserDto().getUsername());
+        return ResponseEntity.accepted().body(signUpResponse);
+    }
+    
     @PostMapping("/signin")
     public ResponseEntity<SignInResponse> signin(@Valid @RequestBody SignInRequest signInRequest,
             HttpServletResponse httpServletResponse) {

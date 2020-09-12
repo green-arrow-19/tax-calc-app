@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import arrow.green.taxcalcapp.config.EmailServiceConfig;
 import arrow.green.taxcalcapp.exception.UserAlreadyExistException;
 import arrow.green.taxcalcapp.exception.UserNotFoundException;
 import arrow.green.taxcalcapp.exception.WeakPasswordException;
@@ -17,7 +18,9 @@ import arrow.green.taxcalcapp.model.SignInResponse;
 import arrow.green.taxcalcapp.model.SignUpRequest;
 import arrow.green.taxcalcapp.model.SignUpResponse;
 import arrow.green.taxcalcapp.model.User;
+import arrow.green.taxcalcapp.model.document.UserDocument;
 import arrow.green.taxcalcapp.model.dto.UserDto;
+import arrow.green.taxcalcapp.repository.UserDocumentRepository;
 import arrow.green.taxcalcapp.repository.UserRepository;
 import arrow.green.taxcalcapp.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -34,13 +37,17 @@ public class UserService {
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
-    PasswordService passwordService;
+    private PasswordService passwordService;
     @Autowired
-    JwtUtil jwtUtil;
+    private JwtUtil jwtUtil;
     @Autowired
-    AuthenticationService authenticationService;
+    private AuthenticationService authenticationService;
+    @Autowired
+    private UserDocumentRepository userDocumentRepository;
+    @Autowired
+    private EmailServiceConfig emailServiceConfig;
     
     public SignUpResponse signup(SignUpRequest signUpRequest, HttpServletResponse httpServletResponse) {
         Optional<User> user = userRepository.findByUsername(signUpRequest.getUsername());
@@ -56,9 +63,20 @@ public class UserService {
         }
         log.info("SignUp request for user : {}, Saving user", signUpRequest.getUsername());
         User userEntity = generateUser(signUpRequest);
+        if (emailServiceConfig.getEnabled().equals(true)) {
+            UserDocument userDocument = objectMapper.convertValue(userEntity, UserDocument.class);
+            userDocument = userDocumentRepository.save(userDocument);
+            sendVerificationMail(userDocument);
+            return SignUpResponse.builder().userDto(objectMapper.convertValue(userEntity, UserDto.class))
+                                 .status("VERIFICATION EMAIL TRIGGERED").build();
+        }
         User savedUserEntity = userRepository.save(userEntity);
-        return SignUpResponse.builder().userDto(objectMapper.convertValue(userEntity, UserDto.class)).status("SUCCESS")
-                             .build();
+        return SignUpResponse.builder().userDto(objectMapper.convertValue(savedUserEntity, UserDto.class))
+                             .status("SUCCESS").build();
+    }
+    
+    private void sendVerificationMail(UserDocument userDocument) {
+        // TODO : send mail for verification.
     }
     
     private User generateUser(SignUpRequest signUpRequest) {
@@ -98,6 +116,19 @@ public class UserService {
         return SignInResponse.builder().userDto(objectMapper.convertValue(user.get(), UserDto.class)).status("SUCCESS")
                              .jwtToken(token).build();
         
+    }
+    
+    public SignUpResponse signupVerified(String username, HttpServletResponse httpServletResponse) {
+        Optional<UserDocument> userDocument = userDocumentRepository.findByUsername(username);
+        if (userDocument.isEmpty()) {
+            log.error("SignUp verified request FAILED for user : {}, user doesn't exist.", username);
+            throw new UserNotFoundException("User : " + username + ", doesn't exists");
+        }
+        User user = objectMapper.convertValue(userDocument.get(), User.class);
+        user = userRepository.save(user);
+        userDocumentRepository.deleteById(username);
+        return SignUpResponse.builder().userDto(objectMapper.convertValue(user, UserDto.class))
+                             .status("REGISTERED SUCCESSFULLY").build();
     }
 }
 
