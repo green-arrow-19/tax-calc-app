@@ -1,6 +1,9 @@
 package arrow.green.taxcalcapp.service;
 
+import java.net.URI;
+import java.util.Map;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -48,8 +51,11 @@ public class UserService {
     private UserDocumentRepository userDocumentRepository;
     @Autowired
     private EmailServiceConfig emailServiceConfig;
+    @Autowired
+    private EmailServiceCaller emailServiceCaller;
     
-    public SignUpResponse signup(SignUpRequest signUpRequest, HttpServletResponse httpServletResponse) {
+    public SignUpResponse signup(SignUpRequest signUpRequest, HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse) {
         Optional<User> user = userRepository.findByUsername(signUpRequest.getUsername());
         if (user.isPresent()) {
             log.error("SignUp request FAILED for user : {}, user already present.", signUpRequest.getUsername());
@@ -66,17 +72,24 @@ public class UserService {
         if (emailServiceConfig.getEnabled().equals(true)) {
             UserDocument userDocument = objectMapper.convertValue(userEntity, UserDocument.class);
             userDocument = userDocumentRepository.save(userDocument);
-            sendVerificationMail(userDocument);
-            return SignUpResponse.builder().userDto(objectMapper.convertValue(userEntity, UserDto.class))
-                                 .status("VERIFICATION EMAIL TRIGGERED").build();
+            String status = sendVerificationMail(userDocument, httpServletRequest);
+            return SignUpResponse.builder().userDto(objectMapper.convertValue(userEntity, UserDto.class)).status(status)
+                                 .build();
         }
         User savedUserEntity = userRepository.save(userEntity);
         return SignUpResponse.builder().userDto(objectMapper.convertValue(savedUserEntity, UserDto.class))
                              .status("SUCCESS").build();
     }
     
-    private void sendVerificationMail(UserDocument userDocument) {
-        // TODO : send mail for verification.
+    private String sendVerificationMail(UserDocument userDocument, HttpServletRequest httpServletRequest) {
+        URI uri = emailServiceCaller.getUri("send-mail",
+                                            Map.of("to", userDocument.getUsername(), "subject", "EMAIL VERIFICATION",
+                                                   "content", "Welcome to tax-calc"));
+        String responseMsg = emailServiceCaller.sendMail(uri, httpServletRequest, "");
+        if (responseMsg.equals("SUCCESS")) {
+            return "VERIFICATION EMAIL SENT";
+        }
+        return "FAILED TO SEND VERIFICATION MAIL";
     }
     
     private User generateUser(SignUpRequest signUpRequest) {

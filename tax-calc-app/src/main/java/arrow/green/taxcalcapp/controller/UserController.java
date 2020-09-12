@@ -1,5 +1,6 @@
 package arrow.green.taxcalcapp.controller;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserController {
     
     @Autowired
-    UserService userService;
-
+    private UserService userService;
     
     @GetMapping("")
     public ResponseEntity<UserDto> getUser(@RequestParam String username,
@@ -50,9 +50,9 @@ public class UserController {
     
     @PostMapping("/signup")
     public ResponseEntity<SignUpResponse> signup(@Valid @RequestBody SignUpRequest signUpRequest,
-            HttpServletResponse httpServletResponse) {
+            HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
         log.info("SignUp request for user : {}", signUpRequest.getUsername());
-        SignUpResponse signUpResponse = userService.signup(signUpRequest, httpServletResponse);
+        SignUpResponse signUpResponse = userService.signup(signUpRequest, httpServletRequest, httpServletResponse);
         log.info("SignUp request SUCCESSFUL for user : {}", signUpRequest.getUsername());
         return ResponseEntity.accepted().body(signUpResponse);
     }
