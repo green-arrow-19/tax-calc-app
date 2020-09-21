@@ -1,12 +1,16 @@
 package arrow.green.taxcalcapp.service;
 
+import java.net.URI;
+import java.util.Map;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import arrow.green.taxcalcapp.config.EmailServiceConfig;
 import arrow.green.taxcalcapp.exception.UserAlreadyExistException;
 import arrow.green.taxcalcapp.exception.UserNotFoundException;
 import arrow.green.taxcalcapp.exception.WeakPasswordException;
@@ -17,7 +21,9 @@ import arrow.green.taxcalcapp.model.SignInResponse;
 import arrow.green.taxcalcapp.model.SignUpRequest;
 import arrow.green.taxcalcapp.model.SignUpResponse;
 import arrow.green.taxcalcapp.model.User;
+import arrow.green.taxcalcapp.model.document.UserDocument;
 import arrow.green.taxcalcapp.model.dto.UserDto;
+import arrow.green.taxcalcapp.repository.UserDocumentRepository;
 import arrow.green.taxcalcapp.repository.UserRepository;
 import arrow.green.taxcalcapp.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -34,15 +40,22 @@ public class UserService {
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
-    PasswordService passwordService;
+    private PasswordService passwordService;
     @Autowired
-    JwtUtil jwtUtil;
+    private JwtUtil jwtUtil;
     @Autowired
-    AuthenticationService authenticationService;
+    private AuthenticationService authenticationService;
+    @Autowired
+    private UserDocumentRepository userDocumentRepository;
+    @Autowired
+    private EmailServiceConfig emailServiceConfig;
+    @Autowired
+    private EmailServiceCaller emailServiceCaller;
     
-    public SignUpResponse signup(SignUpRequest signUpRequest, HttpServletResponse httpServletResponse) {
+    public SignUpResponse signup(SignUpRequest signUpRequest, HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse) {
         Optional<User> user = userRepository.findByUsername(signUpRequest.getUsername());
         if (user.isPresent()) {
             log.error("SignUp request FAILED for user : {}, user already present.", signUpRequest.getUsername());
@@ -56,9 +69,27 @@ public class UserService {
         }
         log.info("SignUp request for user : {}, Saving user", signUpRequest.getUsername());
         User userEntity = generateUser(signUpRequest);
+        if (emailServiceConfig.getEnabled().equals(true)) {
+            UserDocument userDocument = objectMapper.convertValue(userEntity, UserDocument.class);
+            userDocument = userDocumentRepository.save(userDocument);
+            String status = sendVerificationMail(userDocument, httpServletRequest);
+            return SignUpResponse.builder().userDto(objectMapper.convertValue(userEntity, UserDto.class)).status(status)
+                                 .build();
+        }
         User savedUserEntity = userRepository.save(userEntity);
-        return SignUpResponse.builder().userDto(objectMapper.convertValue(userEntity, UserDto.class)).status("SUCCESS")
-                             .build();
+        return SignUpResponse.builder().userDto(objectMapper.convertValue(savedUserEntity, UserDto.class))
+                             .status("SUCCESS").build();
+    }
+    
+    private String sendVerificationMail(UserDocument userDocument, HttpServletRequest httpServletRequest) {
+        URI uri = emailServiceCaller.getUri("send-mail",
+                                            Map.of("to", userDocument.getUsername(), "subject", "EMAIL VERIFICATION",
+                                                   "content", "Welcome to tax-calc"));
+        String responseMsg = emailServiceCaller.sendMail(uri, httpServletRequest, "");
+        if (responseMsg.equals("SUCCESS")) {
+            return "VERIFICATION EMAIL SENT";
+        }
+        return "FAILED TO SEND VERIFICATION MAIL";
     }
     
     private User generateUser(SignUpRequest signUpRequest) {
@@ -98,6 +129,19 @@ public class UserService {
         return SignInResponse.builder().userDto(objectMapper.convertValue(user.get(), UserDto.class)).status("SUCCESS")
                              .jwtToken(token).build();
         
+    }
+    
+    public SignUpResponse signupVerified(String username, HttpServletResponse httpServletResponse) {
+        Optional<UserDocument> userDocument = userDocumentRepository.findByUsername(username);
+        if (userDocument.isEmpty()) {
+            log.error("SignUp verified request FAILED for user : {}, user doesn't exist.", username);
+            throw new UserNotFoundException("User : " + username + ", doesn't exists");
+        }
+        User user = objectMapper.convertValue(userDocument.get(), User.class);
+        user = userRepository.save(user);
+        userDocumentRepository.deleteById(username);
+        return SignUpResponse.builder().userDto(objectMapper.convertValue(user, UserDto.class))
+                             .status("REGISTERED SUCCESSFULLY").build();
     }
 }
 
